@@ -9,3 +9,4 @@ kagglehub
 tqdm
 transformers
 flask
+tf-keras
