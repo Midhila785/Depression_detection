@@ -2,14 +2,51 @@ from flask import Flask, render_template, request
 from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
 import tensorflow as tf
 import os
+import requests
 
 app = Flask(__name__)
 
 model_dir = os.path.join(os.path.dirname(__file__), 'distilbert_depression_model')
+model_path = os.path.join(model_dir, 'tf_model.h5')
+
+GOOGLE_DRIVE_FILE_ID = 'https://drive.google.com/file/d/1oKzbTF6AZA5z2Wd-nURmkhoj5OQJXKMF/view?usp=drive_link'
+
+def download_file_from_google_drive(file_id, destination):
+    URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
+
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+    return None
+
+def save_response_content(response, destination, chunk_size=32768):
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(chunk_size):
+            if chunk:  # filter out keep-alive chunks
+                f.write(chunk)
+
+# Download model if missing
+if not os.path.exists(model_path):
+    os.makedirs(model_dir, exist_ok=True)
+    print("Downloading model file from Google Drive...")
+    download_file_from_google_drive(GOOGLE_DRIVE_FILE_ID, model_path)
+    print("Model download completed.")
+
+# Load tokenizer and model AFTER model file is ensured
 tokenizer = DistilBertTokenizer.from_pretrained(model_dir)
 model = TFDistilBertForSequenceClassification.from_pretrained(model_dir)
 
-# Label map aligns with your encoding
 label_map = {0: 'Highly Depressed', 1: 'Moderately Depressed', 2: 'Not Depressed'}
 
 def predict_depression(text, max_length=64):
