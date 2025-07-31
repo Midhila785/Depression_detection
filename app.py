@@ -9,7 +9,8 @@ app = Flask(__name__)
 model_dir = os.path.join(os.path.dirname(__file__), 'distilbert_depression_model')
 model_path = os.path.join(model_dir, 'tf_model.h5')
 
-GOOGLE_DRIVE_FILE_ID = 'https://drive.google.com/file/d/1oKzbTF6AZA5z2Wd-nURmkhoj5OQJXKMF/view?usp=drive_link'
+GOOGLE_DRIVE_FILE_ID = '1oKzbTF6AZA5z2Wd-nURmkhoj5OQJXKMF'
+
 
 def download_file_from_google_drive(file_id, destination):
     URL = "https://docs.google.com/uc?export=download"
@@ -71,4 +72,4 @@ def index():
     return render_template('index.html', result=result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
