@@ -10,3 +10,4 @@ tqdm
 transformers
 flask
 tf-keras
+gunicorn
