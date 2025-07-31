@@ -12,4 +12,5 @@ wordcloud
 requests
 xgboost
 joblib
-keras
+tf-keras==2.15.0
+
