@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Depression Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Depression Prediction</h2>
+        <form method="post">
+            <textarea name="text" placeholder="Enter your text here..." required></textarea><br>
+            <button type="submit">Predict</button>
+        </form>
+        {% if result %}
+            <div class="result">
+                <strong>{{ result }}</strong>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
