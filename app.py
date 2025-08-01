@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
+from transformers import DistilBertTokenizer, DistilBertConfig, TFDistilBertForSequenceClassification
 import tensorflow as tf
 import os
 import requests
@@ -15,13 +15,11 @@ GOOGLE_DRIVE_FILE_ID = '1oKzbTF6AZA5z2Wd-nURmkhoj5OQJXKMF'
 def download_file_from_google_drive(file_id, destination):
     URL = "https://docs.google.com/uc?export=download"
     session = requests.Session()
-
     response = session.get(URL, params={'id': file_id}, stream=True)
     token = get_confirm_token(response)
 
     if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
+        response = session.get(URL, params={'id': file_id, 'confirm': token}, stream=True)
 
     save_response_content(response, destination)
 
@@ -34,19 +32,23 @@ def get_confirm_token(response):
 def save_response_content(response, destination, chunk_size=32768):
     with open(destination, "wb") as f:
         for chunk in response.iter_content(chunk_size):
-            if chunk:  # filter out keep-alive chunks
+            if chunk:
                 f.write(chunk)
 
-# Download model if missing
+# Ensure model directory and download .h5 if needed
 if not os.path.exists(model_path):
     os.makedirs(model_dir, exist_ok=True)
     print("Downloading model file from Google Drive...")
     download_file_from_google_drive(GOOGLE_DRIVE_FILE_ID, model_path)
     print("Model download completed.")
 
-# Load tokenizer and model AFTER model file is ensured
-tokenizer = DistilBertTokenizer.from_pretrained(model_dir)
-model = TFDistilBertForSequenceClassification.from_pretrained(model_dir)
+# Load tokenizer
+tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+
+# Load model architecture (config must match trained model)
+config = DistilBertConfig.from_pretrained("distilbert-base-uncased", num_labels=3)
+model = TFDistilBertForSequenceClassification(config)
+model.load_weights(model_path)
 
 label_map = {0: 'Highly Depressed', 1: 'Moderately Depressed', 2: 'Not Depressed'}
 
